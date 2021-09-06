@@ -8,7 +8,7 @@ import (
 )
 
 type Server struct {
-	Engine *gin.Engine
+	Router *gin.Engine
 	Client *clientv3.Client
 }
 
@@ -19,7 +19,7 @@ func New(cfg Config) (*Server, error) {
 	}
 
 	s := &Server{
-		Engine: gin.Default(),
+		Router: gin.Default(),
 		Client: etcdClient,
 	}
 
