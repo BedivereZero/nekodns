@@ -1,44 +1,67 @@
 package apiserver
 
 import (
-	"reflect"
 	"testing"
 )
 
 func TestNew(t *testing.T) {
 	type args struct {
-		cfg *Configuration
+		cfg Config
 	}
-	var tests = []struct {
-		name string
-		args args
-		want *Server
+	tests := []struct {
+		name    string
+		args    args
+		wantNil bool
+		wantErr bool
 	}{
-		{"", args{&Configuration{"1.1.1.1", uint16(1443)}}, &Server{&Configuration{"1.1.1.1", uint16(1443)}}},
-		{"", args{&Configuration{"2.2.2.2", uint16(2443)}}, &Server{&Configuration{"2.2.2.2", uint16(2443)}}},
-		{"", args{&Configuration{"3.3.3.3", uint16(3443)}}, &Server{&Configuration{"3.3.3.3", uint16(3443)}}},
-		{"", args{&Configuration{"4.4.4.4", uint16(4443)}}, &Server{&Configuration{"4.4.4.4", uint16(4443)}}},
+		// TODO: Add test cases.
+		{
+			name: "",
+			args: args{
+				cfg: Config{
+					BindAddress: "127.0.0.2",
+					SecurePort:  8443,
+					EtcdEndpoints: []string{
+						"http://localhost:2379",
+					},
+				},
+			},
+			wantNil: false,
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := New(tt.args.cfg); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("New() = %v, want %v", got, tt.want)
+			got, err := New(tt.args.cfg)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("New() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if (got == nil) != tt.wantNil {
+				t.Errorf("New() should not got nil")
 			}
 		})
 	}
 }
 
-func TestNewDefaultConfiguration(t *testing.T) {
+func TestDefault(t *testing.T) {
 	tests := []struct {
-		name string
-		want *Configuration
+		name    string
+		wantNil bool
+		wantErr bool
 	}{
-		{"", &Configuration{"0.0.0.0", uint16(443)}},
+		// TODO: Add test cases.
+		{"", false, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := NewDefaultConfiguration(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewDefaultConfiguration() = %v, want %v", got, tt.want)
+			got, err := Default()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Default() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if (got == nil) != tt.wantNil {
+				t.Errorf("New() should not got nil")
 			}
 		})
 	}
