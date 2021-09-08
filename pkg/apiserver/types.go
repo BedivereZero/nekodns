@@ -23,6 +23,8 @@ func New(cfg Config) (*Server, error) {
 		Client: etcdClient,
 	}
 
+	RouterGroupV1(s)
+
 	return s, nil
 }
 
