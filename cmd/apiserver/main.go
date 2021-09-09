@@ -6,5 +6,5 @@ import (
 
 func main() {
 	s, _ := apiserver.Default()
-	s.Router.Run(":8081")
+	s.Router.Run()
 }

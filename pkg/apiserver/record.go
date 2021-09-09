@@ -1,6 +1,7 @@
 package apiserver
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/coredns/coredns/plugin/etcd/msg"
@@ -10,14 +11,20 @@ import (
 )
 
 func (s *Server) CreateRecord(c *gin.Context) {
-	record := v1alpha1.Record{}
+	record := new(v1alpha1.Record)
 	if c.Bind(record) != nil {
+		return
+	}
+
+	b, err := json.Marshal(msg.Service{Host: record.Content})
+	if err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
 	key := msg.Path(record.Name, DefaultEtcdPrefix)
 
-	if _, err := s.Client.Put(c, key, record.Content); err != nil {
+	if _, err := s.Client.Put(c, key, string(b)); err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
@@ -25,7 +32,16 @@ func (s *Server) CreateRecord(c *gin.Context) {
 	c.Status(http.StatusCreated)
 }
 
-func (s *Server) DeleteRecord(c *gin.Context) {}
+func (s *Server) DeleteRecord(c *gin.Context) {
+	key := msg.Path(c.Param("name"), DefaultEtcdPrefix)
+
+	if _, err := s.Client.Delete(c, key); err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	c.Status(http.StatusOK)
+}
 
 func (s *Server) GetRecord(c *gin.Context) {
 	key := msg.Path(c.Param("name"), DefaultEtcdPrefix)
@@ -42,9 +58,14 @@ func (s *Server) GetRecord(c *gin.Context) {
 	}
 
 	kv := resp.Kvs[0]
+	ms := new(msg.Service)
+	if err := json.Unmarshal(kv.Value, ms); err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
 	record := v1alpha1.Record{
 		Name:    c.Param("name"),
-		Content: string(kv.Value),
+		Content: ms.Host,
 	}
 
 	c.JSON(http.StatusOK, record)
